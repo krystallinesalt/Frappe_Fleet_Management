@@ -1,0 +1,83 @@
+# Every pull request runs the whole set: there is deliberately no paths-ignore fast path,
+# because a skipped required check reports as "not run", which reads as "not blocking",
+# and a change misfiled as documentation would ship unverified.
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    name: Server
+
+    services:
+      redis-cache:
+        image: redis:alpine
+        ports:
+          - 13000:6379
+      redis-queue:
+        image: redis:alpine
+        ports:
+          - 11000:6379
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mariadb-admin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          check-latest: true
+
+      - name: Install MariaDB Client
+        run: |
+          sudo apt update
+          sudo apt-get install mariadb-client
+
+      - name: Setup
+        run: |
+          pip install frappe-bench
+          bench init --skip-redis-config-generation --skip-assets --frappe-branch version-16 --python "$(which python)" ~/frappe-bench
+
+      - name: Install
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench get-app fleet_management $GITHUB_WORKSPACE
+          bench setup requirements --dev
+          bench new-site --db-root-password root --admin-password admin test_site
+          bench --site test_site install-app fleet_management
+        env:
+          CI: 'Yes'
+
+      - name: Run Tests
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench --site test_site set-config allow_tests true
+          bench --site test_site run-tests --app fleet_management
+        env:
+          TYPE: server

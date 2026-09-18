@@ -1,0 +1,4 @@
+# The accounts accountable for main — review, and press merge.
+# Workflows read this file rather than hardcoding handles, so it is the single
+# source of truth for "who may merge".
+* @bochiedev @Altair11165

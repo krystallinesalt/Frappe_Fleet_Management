@@ -7,13 +7,13 @@ this.
 
 # Project
 
-- Repository: `[repository_name]` · App/module: `[app_name]` / `[module_name]`
-- Working directory: `[directory where the agent is started]`
-- Bench root: `[path containing apps/, sites/, and Procfile]`
-- Development site: `[app-name].localhost` · Test site: `[app-name]-test.localhost`
-- UI surface(s): `[Desk | portal | Vue 3 + frappe-ui]`
-- Base branch: `[branch, e.g. main]` · Integration branch: `[branch, e.g. develop]`
-- Codeowner who presses merge: `[handle, matching .github/CODEOWNERS]`
+- Repository: `krystallinesalt/Frappe_Fleet_Management` · App/module: `fleet_management` / `Fleet Management`
+- Working directory: `/home/rishabh/Frappe_KSL/frappe-bench/apps/fleet_management`
+- Bench root: `/home/rishabh/Frappe_KSL/frappe-bench`
+- Development site: `not configured` · Test site: `not configured`
+- UI surface(s): `Desk`
+- Base branch: `main` · Integration branch: `develop`
+- Codeowners who press merge: `@bochiedev`, `@Altair11165`
 
 # Start a context
 
@@ -82,7 +82,7 @@ Record the verdict as one row in the phase record's review table.
    introducing a new pattern.
 5. Every phase is a thin vertical slice with an observable outcome. Never schema-only,
    backend-only, or UI-only.
-6. Run `bench --site [site] migrate` after any schema or fixture change, before verifying.
+6. Run `bench --site <test-site> migrate` after any schema or fixture change, before verifying.
 7. Write proportional tests. `IntegrationTestCase` for database, document, permission, or hook
    behaviour on the test site; `UnitTestCase` only for logic needing no site context.
 8. Keep unrelated cleanup out of the active specification.
@@ -106,12 +106,12 @@ is never per phase and must never encode one phase's acceptance criterion — it
 proving a finished phase broke nothing. `e2e/fixtures.ts` is the only file that carries project
 facts. `npm run test:ui` before every push.
 
-Sequence: implement → `agent-browser` walkthrough → local Playwright plus `bench --site [test
-site] run-tests --app [app_name]` → push → PR, where CI reruns both.
+Sequence: implement → `agent-browser` walkthrough → local Playwright plus `bench --site <test-site>
+run-tests --app fleet_management` → push → PR, where CI reruns both.
 
 **Functional testing runs only on the test site.** Never write test records to the development
 site: a Desk walkthrough cannot be rolled back the way a document-API run can, so it leaves
-residue. Both tools authenticate without a password — `bench browse [site] --user [email]`
+residue. Both tools authenticate without a password — `bench browse <test-site> --user [email]`
 mints a session id printed as `?sid=`; set it as the `sid` cookie. Never type credentials into
 a login form. This is a user-impersonation primitive that only works because `developer_mode`
 is on — acceptable on a disposable test site, a privilege-escalation surface anywhere else.
@@ -121,8 +121,8 @@ is on — acceptable on a disposable test site, a privilege-escalation surface a
 A site that never completed the setup wizard fails misleadingly: Desk re-routes everything to
 the wizard, so every DocType route resolves as a Page and returns `403 Not permitted` — for
 every user and DocType — while roles and `can_read` in the boot payload look perfectly correct.
-Run `bench --site [site] execute frappe.utils.install.complete_setup_wizard` on any new site
-first. It also needs `bench --site [site] set-config developer_mode 1`, without which `bench
+Run `bench --site <test-site> execute frappe.utils.install.complete_setup_wizard` on any new site
+first. It also needs `bench --site <test-site> set-config developer_mode 1`, without which `bench
 browse --user` refuses to mint a session for a non-Administrator — and it prints the refusal
 while exiting `0`, so check the output for `?sid=`, never the exit code.
 
@@ -160,14 +160,14 @@ trailing period. `scope` optional; `!` before the colon marks a breaking change.
 `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`.
 Never use the word "phase" in a commit message.
 
-Nothing is pushed to `[base branch]` directly; work reaches it through `[integration branch]`.
+Nothing is pushed to `main` directly; work reaches it through `develop`.
 A pull request is opened at each point a human decision is required, not per file touched:
 
 | Branch | Carries | Merges into | The approval it seeks |
 |---|---|---|---|
-| `spec/[NNN-name]` | `spec.md`, scaffolded phase records, the `PROGRESS.md` pointer | `[integration branch]` | Specification approved, implementation may begin |
-| `feature\|fix\|chore/[NNN]-phase-[N]` | Implementation, that phase's verification record with its review table filled in, the `PROGRESS.md` update | `[integration branch]` | The phase is signed off |
-| `release/[version]` or `[integration branch]` itself | Accumulated, reviewed work | `[base branch]` | The release is cut |
+| `spec/[NNN-name]` | `spec.md`, scaffolded phase records, the `PROGRESS.md` pointer | `develop` | Specification approved, implementation may begin |
+| `feature\|fix\|chore/[NNN]-phase-[N]` | Implementation, that phase's verification record with its review table filled in, the `PROGRESS.md` update | `develop` | The phase is signed off |
+| `release/[version]` or `develop` itself | Accumulated, reviewed work | `main` | The release is cut |
 
 Every pull request runs the full check set — no fast path for documentation-only changes,
 because a check skipped by a path filter reports "not run", which reads as "not blocking".
@@ -175,25 +175,20 @@ because a check skipped by a path filter reports "not run", which reads as "not 
 The agent prepares the pull request; a human opens it, attaches screenshots, and merges it:
 push the branch, compose the body from `.github/pull_request_template.md`, hand over the
 compare URL (or `gh pr create` command) and the exact screenshot paths, then the human opens
-the PR, drags in the screenshots — `gh` cannot upload images — and the codeowner in
-`.github/CODEOWNERS` merges it. The agent does not open, approve, or merge a pull request.
+the PR, drags in the screenshots — `gh` cannot upload images — and the codeowners in
+`.github/CODEOWNERS` merge it. The agent does not open, approve, or merge a pull request.
 
 # Adopting this kit in an existing repository
 
-Delete this section when the repository has no history that predates the kit. A repository that
-already carries planning or verification documents does not have to migrate them. Record here,
-once: where the pre-kit record lives, cited as reference rather than re-verified (`[path]`);
-where the cutover happened — the first specification tracked under `specs/`, and which of its
-phases are evidenced only in the old location (`[NNN-name]`, `[phase IDs]`); and what must not
-be created again — the old paths, now closed to new work (`[paths]`). Re-verifying completed
-work to satisfy a new format costs more than it proves. Cite it and move on.
+The pre-kit scaffold is commit `a21a579`. The cutover is specification
+`001-fleet-fuel-management`; there is no pre-kit phase evidence. No legacy paths are closed.
 
 # References
 
-- Framework/API pattern: `[path or repository and exact pattern]`
-- Comparable feature: `[path or repository and exact feature]`
-- Tests: `[path]`, `IntegrationTestCase` on `[test site]`.
-- Roles: `[role names]`.
-- Test commands: `bench --site [test site] run-tests --app [app_name]` and `npm run test:ui`.
-- Required CI: `CI` workflow (`.github/workflows/ci.yml`, jobs `tests` and `ui`) and `Linters`
-  (`.github/workflows/linter.yml`).
+- Framework/API pattern: `../frappe`.
+- Comparable feature: no comparable feature exists yet.
+- Tests: no automated application tests exist yet; use `IntegrationTestCase` on `<test-site>`.
+- Roles: `Fleet User`, `Fleet Approver`, `Fleet Admin`.
+- Test commands: `bench --site <test-site> run-tests --app fleet_management` and `npm run test:ui`.
+- Required CI: `CI` workflow (`.github/workflows/ci.yml`, job `tests`) and `Linters`
+  (`.github/workflows/linter.yml`). UI CI is added when real fixtures and a lockfile exist.

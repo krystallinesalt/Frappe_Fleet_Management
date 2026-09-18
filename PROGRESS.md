@@ -18,10 +18,11 @@ at the phase named in its status.
 
 | | |
 |---|---|
-| Bench root | /home/kayadmin/frappe-bench |
+| Bench root | /home/rishabh/Frappe_KSL/frappe-bench |
 | Development site | not configured |
 | Test site | not configured (all functional testing) |
-| Base branch | version-16 (current app branch) |
+| Base branch | main |
+| Integration branch | develop |
 
 ## Phase records
 
