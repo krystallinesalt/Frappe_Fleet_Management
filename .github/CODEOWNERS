@@ -1,4 +1,3 @@
-# The accounts accountable for main — review, and press merge.
-# Workflows read this file rather than hardcoding handles, so it is the single
-# source of truth for "who may merge".
+# Joint review owners for this repository.
+# Repository settings govern merge authorization and enforcement.
 * @bochiedev @Altair11165

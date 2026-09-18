@@ -104,10 +104,12 @@ listed by exact path in the PR for the human to attach; see the naming conventio
 tenancy scoping, list and form rendering, create/submit/cancel, permission allow and deny. It
 is never per phase and must never encode one phase's acceptance criterion — its only job is
 proving a finished phase broke nothing. `e2e/fixtures.ts` is the only file that carries project
-facts. `npm run test:ui` before every push.
+facts. Run `npm run test:ui` before every push only after UI testing is enabled with real
+fixtures, a lockfile, and a test site.
 
-Sequence: implement → `agent-browser` walkthrough → local Playwright plus `bench --site <test-site>
-run-tests --app fleet_management` → push → PR, where CI reruns both.
+Sequence: implement → `agent-browser` walkthrough → `bench --site <test-site> run-tests --app
+fleet_management` → push → PR, where CI reruns server tests. After UI testing is enabled with
+real fixtures, a lockfile, and a test site, also run local Playwright and have CI rerun UI tests.
 
 **Functional testing runs only on the test site.** Never write test records to the development
 site: a Desk walkthrough cannot be rolled back the way a document-API run can, so it leaves
@@ -189,6 +191,8 @@ The pre-kit scaffold is commit `a21a579`. The cutover is specification
 - Comparable feature: no comparable feature exists yet.
 - Tests: no automated application tests exist yet; use `IntegrationTestCase` on `<test-site>`.
 - Roles: `Fleet User`, `Fleet Approver`, `Fleet Admin`.
-- Test commands: `bench --site <test-site> run-tests --app fleet_management` and `npm run test:ui`.
+- Test commands: `bench --site <test-site> run-tests --app fleet_management`; add `npm run test:ui`
+  after UI testing is enabled with real fixtures, a lockfile, and a test site.
 - Required CI: `CI` workflow (`.github/workflows/ci.yml`, job `tests`) and `Linters`
-  (`.github/workflows/linter.yml`). UI CI is added when real fixtures and a lockfile exist.
+  (`.github/workflows/linter.yml`). UI CI is added when real fixtures, a lockfile, and a test
+  site exist.
